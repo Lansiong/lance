@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stylish CRUD Application</title>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #6dd5ed, #2193b0);
+            color: #333;
+        }
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            margin: 50px auto;
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            animation: fadeIn 1s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #333;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        form input, form select {
+            flex: 1 1 45%;
+            padding: 10px;
+            font-size: 16px;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+        form input:focus, form select:focus {
+            border-color: #2193b0;
+            box-shadow: 0 0 5px rgba(33, 147, 176, 0.5);
+        }
+        form button {
+            background-color: #6dd5ed;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+        form button:hover {
+            background-color: #2193b0;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            font-size: 14px;
+        }
+        th {
+            background: #2193b0;
+            color: #fff;
+            text-transform: uppercase;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        input.edit-input {
+            width: 95%;
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .action-btn {
+            border: none;
+            padding: 8px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            color: #fff;
+            border-radius: 5px;
+            margin: 2px;
+            transition: all 0.3s ease;
+        }
+        .edit-btn {
+            background-color: #ffc107;
+        }
+        .delete-btn {
+            background-color: #dc3545;
+        }
+        .action-btn:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Motor Rentals Systems</h1>
+        <form id="rentalForm">
+            <input type="text" id="name" placeholder="Name" required>
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="text" id="phone" placeholder="Phone" required>
+            <select id="item" required>
+                <option value="" disabled selected>Select a Moto</option>
+            </select>
+            <input type="number" id="duration" placeholder="Duration (in days)" required>
+            <button type="submit">Submit</button>
+        </form>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Item</th>
+                    <th>Duration</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="recordsTableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const motos = [' HONDA', ' YAMAHA', ' ZUSUKI', ' KAWASAKI'];
+        let records = [];
+
+        function populateMotoOptions() {
+            const select = document.getElementById('item');
+            motos.forEach(moto => {
+                const option = document.createElement('option');
+                option.value = moto;
+                option.textContent = moto;
+                select.appendChild(option);
+            });
+        }
+
+        function renderRecords() {
+            const tbody = document.getElementById('recordsTableBody');
+            tbody.innerHTML = '';
+            records.forEach((record, index) => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><input class="edit-input" type="text" value="${record.name}" disabled></td>
+                        <td><input class="edit-input" type="email" value="${record.email}" disabled></td>
+                        <td><input class="edit-input" type="text" value="${record.phone}" disabled></td>
+                        <td><input class="edit-input" type="text" value="${record.item}" disabled></td>
+                        <td><input class="edit-input" type="number" value="${record.duration}" disabled></td>
+                        <td>
+                            <button class="action-btn edit-btn" onclick="editRecord(this, ${index})">Edit</button>
+                            <button class="action-btn delete-btn" onclick="confirmDelete(${index})">Delete</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function editRecord(button, index) {
+            const row = button.closest('tr');
+            const inputs = row.querySelectorAll('.edit-input');
+            const isEditing = button.innerText === 'Save';
+            inputs.forEach(input => input.disabled = isEditing);
+
+            if (isEditing) {
+                // Save updated values
+                records[index] = {
+                    name: inputs[0].value,
+                    email: inputs[1].value,
+                    phone: inputs[2].value,
+                    item: inputs[3].value,
+                    duration: inputs[4].value
+                };
+                renderRecords();
+                alert('Data updated successfully!');
+            } else {
+                button.innerText = 'Save';
+            }
+        }
+
+        function confirmDelete(index) {
+            if (confirm("Are you sure you want to delete this record?")) {
+                motos.push(records[index].item); // Re-add the moto to the list
+                records.splice(index, 1);
+                populateMotoDropdown();
+                renderRecords();
+            }
+        }
+
+        function populateMotoDropdown() {
+            const select = document.getElementById('item');
+            select.innerHTML = '<option value="" disabled selected>Select a Moto</option>';
+            motos.forEach(moto => {
+                const option = document.createElement('option');
+                option.value = moto;
+                option.textContent = moto;
+                select.appendChild(option);
+            });
+        }
+
+        document.getElementById('rentalForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
+            const item = document.getElementById('item').value;
+            const duration = document.getElementById('duration').value;
+
+            if (records.some(record => record.item === item)) {
+                alert('This moto is already not available.');
+                return;
+            }
+
+            records.push({ name, email, phone, item, duration });
+            motos.splice(motos.indexOf(item), 1); // Remove the moto from available list
+            populateMotoDropdown();
+            this.reset();
+            renderRecords();
+        });
+
+        // Initialize the moto dropdown
+        populateMotoOptions();
+    </script>
+</body>
+</html>
